@@ -1,0 +1,19 @@
+[project]
+name = "make-sense"
+version = "0.1.0"
+description = "Atempt for making research papers easier to read"
+readme = "README.md"
+authors = [
+    { name = "mohith", email = "mohithgundemeda@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "arxiv>=4.0.1",
+]
+
+[project.scripts]
+make-sense = "make_sense:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
