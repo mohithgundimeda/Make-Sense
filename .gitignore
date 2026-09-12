@@ -8,5 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Additions
 scratch
 logs
+pdfs
+processed_pdfs
+.env
+llamacpp

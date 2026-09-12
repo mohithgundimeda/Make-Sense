@@ -1,14 +1,15 @@
 [project]
 name = "make-sense"
 version = "0.1.0"
-description = "Atempt for making research papers easier to read"
+description = "Converts research paper PDFs into structured, beginner-friendly explainer documents using LLMs."
 readme = "README.md"
 authors = [
-    { name = "mohith", email = "mohithgundemeda@gmail.com" }
+    { name = "mohith", email = "mohith.work@outlook.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "arxiv>=4.0.1",
+    "marker-pdf>=2.0.0",
+    "pydantic-settings>=2.15.0",
 ]
 
 [project.scripts]
