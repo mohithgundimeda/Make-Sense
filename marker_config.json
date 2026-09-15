@@ -1,0 +1,12 @@
+{
+    "llm_service": "marker.services.gemini.GoogleGeminiService",
+    "mode": "fast",
+    "output_format": "markdown",
+    "use_llm": true,
+    "gemini_model_name": "gemini-3.5-flash-lite",
+    "force_ocr": false,
+    "redo_inline_math": true,
+    "max_retries": 4,
+    "retry_wait_time": 10,
+    "timeout": 60
+}

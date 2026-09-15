@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "logging-tree>=1.10",
     "marker-pdf>=2.0.0",
     "pydantic-settings>=2.15.0",
 ]

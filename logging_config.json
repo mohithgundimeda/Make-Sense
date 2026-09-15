@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "standard": {
+            "format": "{asctime} {name:^15} [{levelname:^8}] {filename}:{lineno} {message}",
+            "style": "{"
+        }
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "formatter": "standard",
+            "filename": "history.log"
+        }
+    },
+     "root": {"level": "ERROR", "handlers": ["file"]},
+    "loggers": {
+        "make_sense": {"level": "INFO"},
+        "marker": {"level": "WARNING", "handlers": []}
+    }
+}

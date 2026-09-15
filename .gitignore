@@ -16,3 +16,5 @@ pdfs
 processed_pdfs
 .env
 llamacpp
+Temp/*
+history.log

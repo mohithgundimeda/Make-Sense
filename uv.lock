@@ -729,16 +729,27 @@ wheels = [
 ]
 
 [[package]]
+name = "logging-tree"
+version = "1.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/8a/4d9bd637ecf05ec6c76179f91824b1a66425a9275abf676e87fe8a9c23a2/logging_tree-1.10.tar.gz", hash = "sha256:cd78848fe0ee4aafcc64fa8a66f96f177186ff3d883619b1d7f3628564802095", size = 12731, upload-time = "2024-05-03T16:05:18.892Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/1c/8e9c092e0faa0eb5ac8f5e859a62bd82239eba0259c05f6fd9bb6ddd6b91/logging_tree-1.10-py2.py3-none-any.whl", hash = "sha256:f0e9f4645e6476e48c563ba2b858286079f886b2d5ad8abeaffd38e536a387d8", size = 13280, upload-time = "2024-05-03T16:05:10.674Z" },
+]
+
+[[package]]
 name = "make-sense"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "logging-tree" },
     { name = "marker-pdf" },
     { name = "pydantic-settings" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "logging-tree", specifier = ">=1.10" },
     { name = "marker-pdf", specifier = ">=2.0.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
 ]
