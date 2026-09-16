@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "logging-tree>=1.10",
     "marker-pdf>=2.0.0",
+    "openrouter>=1.1.143",
     "pydantic-settings>=2.15.0",
 ]
 

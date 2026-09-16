@@ -11,8 +11,11 @@ import sys
 import json
 import logging
 import logging.config
+import os
 from pathlib import Path
 from make_sense.parser import MarkerSettings, pdf_2_md
+from make_sense.model import generate_explanation
+from make_sense.pandoc import save_model_response
 
 def setup_logging(config_path: str = "logging_config.json") -> None:
     """
@@ -39,20 +42,27 @@ if __name__ == '__main__':
     logger = logging.getLogger('make_sense')
     
     project_root = Path(__name__).resolve().parent
+    
     temp_path = project_root / 'Temp'
-    marker_config_path = project_root / 'marker_config.json'
+    
+    temp_path.mkdir(exist_ok=True)
+    
+    # Validate the given input
     
     if len(sys.argv) != 2:
         sys.exit("Expecting the pdf's path.")
     
-    str_pdf_filepath = sys.argv[1]
+    str_pdf_filename = sys.argv[1]
         
-    pdf_filepath = Path(str_pdf_filepath + '.pdf').resolve() if not str_pdf_filepath.endswith('.pdf') else Path(str_pdf_filepath).resolve()
+    # Assuming the file is already inside Temp folder (raises error if it doesn't)
+    pdf_filepath = (temp_path / Path(str_pdf_filename + '.pdf').resolve()) if not str_pdf_filename.endswith('.pdf') else (temp_path / Path(str_pdf_filename).resolve())
     
     if not pdf_filepath.is_file():
         resolved_pdf_filepath = str(pdf_filepath)
         logger.critical("Can't find the given pdf file %s", resolved_pdf_filepath)
         sys.exit(f"Can't find the given pdf file {resolved_pdf_filepath}")
+    
+    marker_config_path = project_root / 'marker_config.json'
     
     try:
         with open(marker_config_path, 'r', encoding='utf-8') as jfile:
@@ -60,15 +70,19 @@ if __name__ == '__main__':
 
             settings = MarkerSettings(**config)
             
-            pdf_2_md(settings.model_dump(), pdf_filepath)
+            marker_output_path = pdf_2_md(settings.model_dump(), pdf_filepath)
+
+            model_response_path = generate_explanation( marker_output_path, os.environ.get('OPENROUTER_API_KEY', '') )
+            
+            output_pdf_path = save_model_response(model_response_path, pdf_filepath.stem)
+            
     
     except FileNotFoundError as e:
         logger.critical("Unable to find %s", str(marker_config_path))
-        
         sys.exit(str(e))
     
     else:
-        logger.info('Completed Parsing Successfully. Cranking the Model..')
+        logger.info(f'Completed Generating pdf for {str(pdf_filepath)}.')
     
     
     # Delete the copied .pdf file after generating output.pdf

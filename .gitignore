@@ -18,3 +18,5 @@ processed_pdfs
 llamacpp
 Temp/*
 history.log
+openrouter_stats.py
+stats.bat

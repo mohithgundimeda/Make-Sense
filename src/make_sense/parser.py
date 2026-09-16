@@ -15,11 +15,7 @@ import sys
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
 ## Choosing llama.cpp over vLLM to run the model in Marker, It MUST be set in environment variables before any marker/surya import
-os.environ["SURYA_INFERENCE_BACKEND"] = "llamacpp" # remove in prod
-os.environ["LLAMA_CPP_BINARY"] = str(PROJECT_ROOT / 'llamacpp' / 'llama-server') # remove in prod
 
 if (not os.environ.get("LLAMA_CPP_BINARY") or 
     not os.environ.get("SURYA_INFERENCE_BACKEND")):
@@ -52,20 +48,17 @@ class MarkerSettings(BaseSettings):
     timeout: int
     
     gemini_api_key: str = Field(validation_alias='GEMINI_API_KEY')
-    
-    model_config = SettingsConfigDict(
-        env_file = PROJECT_ROOT / '.env',
-        env_file_encoding= 'utf-8',
-        extra='ignore'
-        )
 
 
-def pdf_2_md(config: dict, pdf_filepath: Path) -> None:
-    """Takes PDF and generate marker_output.md, image in output_dir
+def pdf_2_md(config: dict, pdf_filepath: Path) -> Path:
+    """Takes PDF and generate marker_output.md, image in output_dir. Returns the path of the saved markdownfile.
 
     Args:
         config (dict): Configurations for Marker.
         pdf_filepath (Path): Absolute path to the pdf file.
+    
+    Returns:
+    The path of the processed markdown file.
     """
     
     
@@ -105,7 +98,7 @@ def pdf_2_md(config: dict, pdf_filepath: Path) -> None:
         images = rendered_output.images
         
         if images:
-            logger.info('Found %d images in %s.pdf', len(images), pdf_filepath.name)
+            logger.info('Found %d images in %s.pdf', len(images), pdf_filepath.stem)
             for img_name, img_obj in images.items():
                 
                 try:
@@ -113,6 +106,7 @@ def pdf_2_md(config: dict, pdf_filepath: Path) -> None:
                 except Exception as e:
                     logger.error('Failed to save %s in %s', img_name, str(images_path))
         
+        return output_filepath
                 
     except Exception as e:
         logger.critical("Marker couldn't convert the pdf %s to markerdown. Check the console for more details.", str(pdf_filepath))
@@ -122,6 +116,7 @@ def pdf_2_md(config: dict, pdf_filepath: Path) -> None:
         
 if __name__ == "__main__":
     
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
     
     if len(sys.argv) != 2:
         sys.exit('Expecting a path for the pdf to start.')

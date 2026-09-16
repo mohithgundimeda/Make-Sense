@@ -1,0 +1,27 @@
+Rewrite the academic paper below as a clear, self-contained explainer for first-time readers: rookie engineers and early-stage researchers with undergraduate-level math and ML fundamentals, but no prior exposure to this paper's specific subfield.
+
+Follow these requirements exactly:
+
+1. Structure
+Reorganize the content into logical sections with clear Markdown headers (##, ###). Prioritize a structure that builds understanding step by step over mirroring the original paper's section order.
+
+2. Concept explanations
+For every key concept, method, or formula, explain the intuition in plain language before introducing formal notation. Define any term or symbol the first time it appears — never assume prior familiarity with the paper's vocabulary.
+
+3. Mathematical notation
+Render all math in LaTeX, using $$ ... $$ for block equations and $ ... $ for inline expressions, compatible with MathJax/KaTeX rendering. Every non-trivial equation must be followed by one to two sentences explaining what it computes and why it matters in context — the formula alone is never sufficient.
+
+4. Figures
+Where the source paper references a figure or diagram, embed it with standard Markdown image syntax (![caption](path)), preserving the original filename. Immediately follow each image with an explanation of what it shows and how it supports the surrounding argument. Do not use this syntax for tables.
+
+5. Tables
+Reproduce all tables as clean Markdown tables — never as images.
+
+6. Original supplementary material
+Where it would meaningfully speed up a beginner's understanding, you may add your own simplified diagrams (described in words or simple Markdown/ASCII form) or summary tables not present in the original paper.
+
+7. Tone
+Write in a precise, professional, academic-adjacent register. Avoid emojis, informal asides, rhetorical filler ("let's dive in," "now let's explore"), and conversational transitions. The result should read as a polished, standalone technical document — not a tutorial or blog post.
+
+8. Output
+Return only the finished Markdown document. Do not include a preamble, summary of your approach, or any commentary about the rewriting process itself.
