@@ -1,5 +1,5 @@
 ---
-title: "Unsupervised Data Augmentation for Consistency Training — Explained"
+title: 
 documentclass: scrartcl
 geometry:
 - margin=1in
@@ -9,6 +9,5 @@ toc: true
 toc-depth: 2
 colorlinks: true
 linkcolor: blue
-
 ---
 

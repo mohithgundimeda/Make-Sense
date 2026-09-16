@@ -3,7 +3,19 @@ Rewrite the academic paper below as a clear, self-contained explainer for first-
 Follow these requirements exactly:
 
 1. Structure
-Reorganize the content into logical sections with clear Markdown headers (##, ###). Prioritize a structure that builds understanding step by step over mirroring the original paper's section order.
+Reorganize the content into logical sections with clear Markdown headers (##, ###). Prioritize a structure that builds understanding step by step over mirroring the original paper's section order. Paste the following markdown text at the top of your respose with filled title name field as the given paper's title, do not change any values other than title:
+---
+title: ( write the title here !!)
+documentclass: scrartcl
+geometry:
+- margin=1in
+fontfamily: tgtermes
+fontsize: 11pt
+toc: true
+toc-depth: 2
+colorlinks: true
+linkcolor: blue
+---
 
 2. Concept explanations
 For every key concept, method, or formula, explain the intuition in plain language before introducing formal notation. Define any term or symbol the first time it appears — never assume prior familiarity with the paper's vocabulary.

@@ -39,6 +39,7 @@ def _prepend_to_file(model_response_filepath: Path, style_path: Path) -> None:
         shutil.copyfileobj(model_response_filepath.open("rb"), tmp)
 
     tmp_path.replace(model_response_filepath)
+    logger.info("Added style to the front of the model response.")
 
 
 def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
@@ -58,10 +59,6 @@ def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
     
     
     temp_path = model_response_path.resolve().parent
-    
-    style_path = Path(temp_path.parent / 'pdf_style.md')
-    
-    _prepend_to_file(model_response_path, style_path)
     
     output_path = temp_path / f'{input_pdf_name}(make_sense).pdf'
     
@@ -90,6 +87,8 @@ def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
     except subprocess.CalledProcessError as e:
         logger.critical("Error converting markdown to PDF: %s", e)
         sys.exit(f"Error converting markdown to PDF: {e}")
+    
+    logger.info("Succefully created the pdf for %s", str(model_response_path))
     
     return output_path
 

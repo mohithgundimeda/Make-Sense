@@ -36,7 +36,7 @@ def _call_model(model:str, messages:list, api_key:str) -> requests.Response:
             "Content-Type": "application/json",
         },
         json={"model": model, "messages": messages, "stream": False, "reasoning": {"enabled": True}},
-        timeout=30,
+        timeout=180,
     )
     
     return response
@@ -45,8 +45,8 @@ def _get_safe_response(messages: list, models: list, api_key: str) -> str:
     """
     Make requests to the primary model, then a fallback model if something goes wrong.
     Args:
-        messages (list): prompt for the model.
-        models (list): model to use with fallbacks. First model considered as primary.
+        messages (list[dict]): prompt for the model.
+        models (list[str]): model to use with fallbacks. First model considered as primary.
         api_key (str): openrouter api key.
 
     Raises:
@@ -77,14 +77,16 @@ def _get_safe_response(messages: list, models: list, api_key: str) -> str:
                 logger.error("%s responded with empty string, trying next model...", model)
                 continue
             
+            logger.info(f"{model} responded successfully.")
             return model_response
             
         except requests.exceptions.Timeout:
             logger.error("%s timed out, trying next model...", model)
             continue
         except requests.exceptions.RequestException as e:
-            logger.error("%s failed: %s, trying next model...", model, str(e))
-            continue
+             body = getattr(e.response, "text", "no response body")
+             logger.error("%s failed: %s | response: %s", model, str(e), body)
+             continue
 
     raise RuntimeError("All models failed to run.")
 
@@ -138,14 +140,16 @@ def generate_explanation(md_filepath: Path, api_key: str) -> Path:
                         models = list(parser['MODELS'].values())
                         
                         model_response = _get_safe_response(messages=messages, models = models, api_key=api_key)
+                        
                     
-                    except KeyError as e:
+                    except Exception as e:
                         logger.critical(f"Unable to find project_variables.ini in project root.")
                         sys.exit(str(e))
                     
                     try:
                         with open(output_filepath, 'w', encoding='utf-8') as response_file:
                             response_file.write(model_response)
+                            logger.info("Response wrote to %s", str(output_filepath))
                             
                     except Exception as e:
                         logger.critical("Model responded succesfully, But failed to save the response: %s", str(e))
@@ -163,7 +167,7 @@ def generate_explanation(md_filepath: Path, api_key: str) -> Path:
 
 if __name__ == '__main__':
     
-    project_root = Path(__name__).resolve().parents[2]
+    project_root = Path(__file__).resolve().parents[2]
     
     try:
         api_key = os.environ['OPENROUTER_API_KEY']

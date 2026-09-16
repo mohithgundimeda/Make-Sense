@@ -52,10 +52,10 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         sys.exit("Expecting the pdf's path.")
     
-    str_pdf_filename = sys.argv[1]
+    str_pdf_filename = sys.argv[1].strip().replace(" ", '_')
         
     # Assuming the file is already inside Temp folder (raises error if it doesn't)
-    pdf_filepath = (temp_path / Path(str_pdf_filename + '.pdf').resolve()) if not str_pdf_filename.endswith('.pdf') else (temp_path / Path(str_pdf_filename).resolve())
+    pdf_filepath = (temp_path / (str_pdf_filename + '.pdf')) if not str_pdf_filename.endswith('.pdf') else (temp_path / str_pdf_filename)
     
     if not pdf_filepath.is_file():
         resolved_pdf_filepath = str(pdf_filepath)
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         sys.exit(str(e))
     
     else:
-        logger.info(f'Completed Generating pdf for {str(pdf_filepath)}.')
+        logger.info(f'Task Completed for {str(pdf_filepath)}.')
     
     
     # Delete the copied .pdf file after generating output.pdf
