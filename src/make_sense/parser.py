@@ -87,7 +87,7 @@ def pdf_2_md(config: dict, pdf_filepath: Path) -> Path:
                 md_file.write(rendered_output.markdown)
         except Exception as e:
             logger.critical("Conversion process completed, but error writing markdown to output file %s.", str(output_filepath))
-            sys.exit(str(e))
+            raise
         else:
              logger.info('Marker succesfully converted %s to %s.md', pdf_filepath.name, pdf_filepath.stem)
             
@@ -110,7 +110,7 @@ def pdf_2_md(config: dict, pdf_filepath: Path) -> Path:
                 
     except Exception as e:
         logger.critical("Marker couldn't convert the pdf %s to markerdown. Check the console for more details.", str(pdf_filepath))
-        sys.exit(str(e))
+        raise
     
         
         

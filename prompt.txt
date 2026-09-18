@@ -1,27 +1,15 @@
-Rewrite the academic paper below as a clear, self-contained explainer for first-time readers: rookie engineers and early-stage researchers with undergraduate-level math and ML fundamentals, but no prior exposure to this paper's specific subfield.
+Rewrite the academic paper below as a clear, self-contained explainer for first-time readers: motivated newcomers to the field — undergraduate-level in general quantitative reasoning (algebra, basic statistics, and standard notation for their broad domain), but with no prior exposure to this specific paper's subfield or its specialized vocabulary.
 
 Follow these requirements exactly:
 
 1. Structure
-Reorganize the content into logical sections with clear Markdown headers (##, ###). Prioritize a structure that builds understanding step by step over mirroring the original paper's section order. Paste the following markdown text at the top of your respose with filled title name field as the given paper's title, do not change any values other than title:
----
-title: ( write the title here !!)
-documentclass: scrartcl
-geometry:
-- margin=1in
-fontfamily: tgtermes
-fontsize: 11pt
-toc: true
-toc-depth: 2
-colorlinks: true
-linkcolor: blue
----
+Reorganize the content into logical sections with clear Markdown headers (##, ###). Prioritize a structure that builds understanding step by step over mirroring the original paper's section order.
 
 2. Concept explanations
-For every key concept, method, or formula, explain the intuition in plain language before introducing formal notation. Define any term or symbol the first time it appears — never assume prior familiarity with the paper's vocabulary.
+For every key concept, method, or result, explain the intuition in plain language before introducing field-specific notation or terminology. Define any term, symbol, or abbreviation the first time it appears — never assume prior familiarity with this subfield's conventions, regardless of the paper's domain.
 
-3. Mathematical notation
-Render all math in LaTeX, using $$ ... $$ for block equations and $ ... $ for inline expressions, compatible with MathJax/KaTeX rendering. Every non-trivial equation must be followed by one to two sentences explaining what it computes and why it matters in context — the formula alone is never sufficient.
+3. Mathematical and technical notation
+Where the paper uses mathematical notation, render it in LaTeX, using $$ ... $$ for block equations and $ ... $ for inline expressions, compatible with MathJax/KaTeX rendering. Always wrap mathematical symbols and Greek letters (π, θ, α, β, Σ, etc.) in LaTeX math delimiters ($...$), never as plain Unicode text. Every non-trivial equation or formal expression must be followed by one to two sentences explaining what it computes and why it matters in context — the notation alone is never sufficient. If the paper is primarily non-mathematical (e.g. relies on qualitative methodology, experimental protocol, or descriptive results), apply the same standard to its technical terms and procedures instead.
 
 4. Figures
 Where the source paper references a figure or diagram, embed it with standard Markdown image syntax (![caption](path)), preserving the original filename. Immediately follow each image with an explanation of what it shows and how it supports the surrounding argument. Do not use this syntax for tables.

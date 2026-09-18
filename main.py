@@ -1,5 +1,5 @@
 """
-Entry Point for the project. Takes a pdf, parses it to .md file, generates a detailed explanation, saves it as a pdf.
+Entry Point for the project(In development). Takes a pdf, parses it to .md file, generates a detailed explanation, saves it as a pdf.
 
 EXPECTED FILES & VARIABLES: logging_config.json, marker_config.json, LLAMA_CPP_BINARY and SURYA_INFERENCE_BACKEND in OS's environement variables.
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     marker_config_path = project_root / 'marker_config.json'
     
     try:
-        with open(marker_config_path, 'r', encoding='utf-8') as jfile:
+        with marker_config_path.open('r', encoding='utf-8') as jfile:
             config = json.load(jfile)
 
             settings = MarkerSettings(**config)

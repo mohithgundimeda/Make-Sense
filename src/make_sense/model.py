@@ -14,8 +14,117 @@ import logging
 import sys
 import os
 import configparser
+from google.genai import Client, types
+import pydantic
+from pydantic import BaseModel
 
 logger = logging.getLogger('make_sense.model')
+
+class ResponseStructure(BaseModel):
+        """
+        Intended Structure for model's response.
+        Args:
+            BaseModel : Pydantic Base Class
+        """
+        title : str
+        response: str
+        
+
+model_response = """
+---
+title: "{title}"
+documentclass: scrartcl
+geometry:
+- margin=1in
+fontfamily: tgtermes
+fontsize: 11pt
+toc: true
+toc-depth: 2
+colorlinks: true
+linkcolor: blue
+---
+
+{response}
+"""
+
+
+import re
+
+def _extract_title_and_body(raw_text: str) -> tuple[str, str]:
+    """
+    Seperates title and explanation from model's response.
+    Args:
+        raw_text (str): model's response
+
+    Returns:
+        tuple[str, str]: _description_
+    """
+    if not raw_text:
+        raise ValueError("Received empty input.")
+    
+    match = re.match(r'^#{1,6}\s+(.+?)\n(.*)', raw_text.strip(), re.DOTALL)
+    
+    if match:
+        title = match.group(1).strip()
+        body = match.group(2).strip()
+        return title, body
+
+    return "Untitled", raw_text
+
+def _call_gemini(data: str, prompt: str, model:str) -> str:
+    """
+    Fallback function to call gemini, if openrouter models were unsuccessfull.
+    Args:
+        data (str): parsed markdown file from pdf.
+        prompt (str): Prompt from prompt.txt
+        model (str): gemini model version to use.
+
+    Raises:
+        ValueError: When there is no response.
+        RuntimeError: When gemini isn't accessable.
+
+    Returns:
+        str: gemini response.
+    """
+    
+    contents = types.Content(
+        role='user',
+        parts=[types.Part.from_text(text=data)]
+    )
+    
+    try:
+        with Client(http_options=types.HttpOptions(api_version='v1alpha')) as client:
+            response = client.models.generate_content(
+                model=model,
+                contents=[contents],
+                config=types.GenerateContentConfig(
+                    system_instruction=prompt,
+                    thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
+                    max_output_tokens=30000,
+                    response_mime_type='application/json',
+                    response_json_schema=ResponseStructure.model_json_schema(),
+                )
+            )
+            
+            response_structure = response.parsed
+
+            if not isinstance(response_structure, dict):
+                logger.critical(f"Expected Dict from {model}, got {type(response_structure)}")
+                raise TypeError(f"Expected dict, got {type(response_structure)}")
+
+            logger.info("{model} responded successfully with json schema.")
+            
+            parsed = ResponseStructure.model_validate(response_structure)
+
+            return model_response.format(
+                title=parsed.title,
+                response=parsed.response,
+            )
+            
+    except Exception as e:
+        logger.critical("Error during accessing gemini: %s", str(e))
+        raise RuntimeError(f"Error during accessing gemini: {str(e)}")
+
 
 def _call_model(model:str, messages:list, api_key:str) -> requests.Response:
     """
@@ -35,19 +144,26 @@ def _call_model(model:str, messages:list, api_key:str) -> requests.Response:
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         },
-        json={"model": model, "messages": messages, "stream": False, "reasoning": {"enabled": True}},
+        json={
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "reasoning": {"enabled": True},
+        },
         timeout=180,
     )
     
     return response
 
-def _get_safe_response(messages: list, models: list, api_key: str) -> str:
+def _get_safe_response(models: list, api_key: str, prompt: str, data: str, gemini_model:str) -> str:
     """
     Make requests to the primary model, then a fallback model if something goes wrong.
     Args:
-        messages (list[dict]): prompt for the model.
-        models (list[str]): model to use with fallbacks. First model considered as primary.
+        models (list[str]): openrouter model to use with fallbacks. First model considered as primary.
         api_key (str): openrouter api key.
+        prompt (str): Prompt from prompt.txt
+        data (str): parsed markdown file from pdf.
+        gemini_model (str): gemini model version to use.
 
     Raises:
         RuntimeError: If both models failed to generate response.
@@ -55,39 +171,68 @@ def _get_safe_response(messages: list, models: list, api_key: str) -> str:
     Returns:
         response (str): model's response. 
     """
+    messages = [
+                {'role':'user',"content": data},
+                {"role": "system", "content": prompt}
+                ]
     
     for model in models:
         try:
             response = _call_model(model, messages, api_key)
-
+            
             if response.status_code == 429:
-                print(f"{model} rate limited, trying next model...")
+                logger.error(f"{model} rate limited, trying next model...")
                 continue
 
             if response.status_code >= 500:
-                print(f"{model} server error, trying next model...")
+                logger.error(f"{model} server error, trying next model...")
                 continue
 
             response.raise_for_status()
+            
+            
             response_dict = response.json()
+            try:
+                raw_text = response_dict['choices'][0]['message']['content']
+                
+                if not raw_text:
+                    logger.error("%s returned empty response. Trying next model...", model)
+                    continue
+                
+                title, content = _extract_title_and_body(raw_text)
+                
+                logger.info("%s generated response successfully.", model)
+                
+                
+                return model_response.format(title=title, response=content)
             
-            model_response = response_dict['choices'][0]['message']['content']
-            
-            if not model_response:
-                logger.error("%s responded with empty string, trying next model...", model)
+            except pydantic.ValidationError as e:
+                logger.error("Error from %s, during validating the response json: %s. Trying next model..", model, str(e))
                 continue
-            
-            logger.info(f"{model} responded successfully.")
-            return model_response
             
         except requests.exceptions.Timeout:
             logger.error("%s timed out, trying next model...", model)
             continue
+        
+        except requests.exceptions.ConnectionError:
+            logger.error("Unable to connect to openrouter. Trying next model..")
+            continue
+        
         except requests.exceptions.RequestException as e:
              body = getattr(e.response, "text", "no response body")
-             logger.error("%s failed: %s | response: %s", model, str(e), body)
+             logger.error("%s failed: %s | response: %s. Trying next model...", model, str(e), body)
              continue
 
+    
+    
+    try:
+        logger.info(f"Error trying openrouter models, trying {gemini_model}.")
+        gemini_response = _call_gemini(data=data, prompt=prompt, model=gemini_model)
+        return gemini_response
+    
+    except Exception:
+        pass
+    
     raise RuntimeError("All models failed to run.")
 
 
@@ -104,76 +249,68 @@ def generate_explanation(md_filepath: Path, api_key: str) -> Path:
     Output:
         The path to the saved model's response file.
     """
-    
-    
-    additional_prompt = """
-<START OF PAPER>
-
-{md_content}
-
-<END OF PAPER>"""
 
     if not api_key:
         logger.critical('Recieved an empty openrouter api key')
-        sys.exit('Recieved an empty openrouter api key')
+        raise ValueError(f"Recieved an empty openrouter api key")
+        # sys.exit('Recieved an empty openrouter api key')
     
     output_filepath = md_filepath.parent / f'{md_filepath.stem}_model_response.md'
     project_root = md_filepath.parents[1]
     
     try:
-        with open(md_filepath, 'r', encoding='utf-8') as marker_output:
+        with md_filepath.open('r', encoding='utf-8') as marker_output:
+            
             data = marker_output.read()
             try:
-                with open(project_root / 'prompt.txt', 'r', encoding='utf-8') as prompt_file:
+                
+                with project_root.joinpath('prompt.txt').open( 'r', encoding='utf-8') as prompt_file:
                     prompt = prompt_file.read()
-                    
-                    messages = [{
-                        'role':'user',
-                        "content": prompt + additional_prompt.format(md_content=data)
-                    }]
-                    
                     
                     try:
                         parser = configparser.ConfigParser()
                         parser.read(project_root / 'project_variables.ini')
                         
-                        models = list(parser['MODELS'].values())
+                        openrouter_models = list(parser['OPENROUTER'].values())
                         
-                        model_response = _get_safe_response(messages=messages, models = models, api_key=api_key)
+                        gemini_model = list(parser['GEMINI'].values())[0]
+                        
+                        model_response = _get_safe_response(models = openrouter_models, api_key=api_key, prompt=prompt, data = data, gemini_model=gemini_model)
                         
                     
                     except Exception as e:
                         logger.critical(f"Unable to find project_variables.ini in project root.")
-                        sys.exit(str(e))
+                        raise
+                        # sys.exit(str(e))
                     
                     try:
-                        with open(output_filepath, 'w', encoding='utf-8') as response_file:
-                            response_file.write(model_response)
-                            logger.info("Response wrote to %s", str(output_filepath))
+                        output_filepath.open('w', encoding='utf-8').write(model_response)
+                        logger.info("Response wrote to %s", str(output_filepath))
                             
                     except Exception as e:
                         logger.critical("Model responded succesfully, But failed to save the response: %s", str(e))
-                        sys.exit(str(e))
+                        raise
+                        # sys.exit(str(e))
                     
                     return output_filepath
                     
             except FileNotFoundError as e:
                 logger.critical("Unable to find the prompt.txt inside %s", str(project_root))
-                sys.exit(str(e))
+                raise FileNotFoundError(str(e))
+                # sys.exit(str(e))
             
     except FileNotFoundError as e:
         logger.critical("Unable to find the marker's output file at %s", str(md_filepath))
-        sys.exit(str(e))
+        raise FileNotFoundError(str(e))
+        # sys.exit(str(e))
 
 if __name__ == '__main__':
-    
-    project_root = Path(__file__).resolve().parents[2]
     
     try:
         api_key = os.environ['OPENROUTER_API_KEY']
         
     except KeyError as e:
-        logging.critical("Couldn't find OPENROUTER_API_KEY in Environment variables")
+        logger.critical("Couldn't find OPENROUTER_API_KEY in Environment variables")
         sys.exit()
     
     if len(sys.argv) != 2:

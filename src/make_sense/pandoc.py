@@ -1,45 +1,46 @@
 # TimeoutExpired error will get return if the timeout exceeded.
 # env variables are passed as mapping with str:str. These are used instead of default process envrionment they said. Although I want to use default environment.
 # If check is true, and the process exits with a non-zero exit code, a CalledProcessError exception will be raised. Attributes of that exception hold the arguments, the exit code, and stdout and stderr if they were captured.
-
+"""
+Takes model's generated markdown response and converts into pdf. Saves the pdf in the same directory as markdown.
+"""
 
 import subprocess
 from pathlib import Path
 import shutil
 import logging
 import sys
-import tempfile
 
 logger = logging.getLogger("make_sense.pandoc")
 
 
-def _prepend_to_file(model_response_filepath: Path, style_path: Path) -> None:
-    """
-    Creates a temp file, write style_path on top, write data inside model_reponse_filepath on bottom, changes temp file to model_response_filepath.
-    Args:
-        model_response_filepath (Path): Path to the _model_response.md
-        style_path (Path): Path to the pdf_style.md
-    """
+# def _prepend_to_file(model_response_filepath: Path, style_path: Path) -> None:
+#     """
+#     Creates a temp file, write style_path on top, write data inside model_reponse_filepath on bottom, changes temp file to model_response_filepath.
+#     Args:
+#         model_response_filepath (Path): Path to the _model_response.md
+#         style_path (Path): Path to the pdf_style.md
+#     """
     
-    if not style_path.exists():
-        logger.error("Unable to file the pdf_style.md. Generating pdf without style.")
-        return
+#     if not style_path.exists():
+#         logger.error("Unable to file the pdf_style.md. Generating pdf without style.")
+#         return
         
-    style_data_in_bytes = style_path.read_bytes()
+#     style_data_in_bytes = style_path.read_bytes()
 
-    with tempfile.NamedTemporaryFile(
-        mode="wb",
-        delete=False,
-        dir=model_response_filepath.parent,
-    ) as tmp:
-        tmp_path = Path(tmp.name)
+#     with tempfile.NamedTemporaryFile(
+#         mode="wb",
+#         delete=False,
+#         dir=model_response_filepath.parent,
+#     ) as tmp:
+#         tmp_path = Path(tmp.name)
 
-        tmp.write(style_data_in_bytes)
+#         tmp.write(style_data_in_bytes)
         
-        shutil.copyfileobj(model_response_filepath.open("rb"), tmp)
+#         shutil.copyfileobj(model_response_filepath.open("rb"), tmp)
 
-    tmp_path.replace(model_response_filepath)
-    logger.info("Added style to the front of the model response.")
+#     tmp_path.replace(model_response_filepath)
+#     logger.info("Added style to the front of the model response.")
 
 
 def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
@@ -54,7 +55,8 @@ def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
     """
     if shutil.which("tectonic") is None:
         logger.critical("tectonic.exe is not available in system paths.")
-        sys.exit("tectonic.exe is not available in system paths.")
+        # sys.exit("tectonic.exe is not available in system paths.")
+        raise ValueError("tectonic.exe is not available in system paths.")
     
     
     
@@ -78,15 +80,18 @@ def save_model_response(model_response_path: Path, input_pdf_name: str) -> Path:
         
     except FileNotFoundError as e:
         logger.critical("Required executable was not found: %s", e.filename)
-        sys.exit(f"Required executable was not found: {e.filename}")
+        # sys.exit(str(e))
+        raise FileNotFoundError(f"Required executable was not found: {e.filename}")
     
     except subprocess.TimeoutExpired:
         logger.critical("Markdown to PDF conversion timed out.")
-        sys.exit("Markdown to PDF conversion timed out.")
+        raise TimeoutError("Markdown to PDF conversion timed out.")
+        # sys.exit("Markdown to PDF conversion timed out.")
     
     except subprocess.CalledProcessError as e:
         logger.critical("Error converting markdown to PDF: %s", e)
-        sys.exit(f"Error converting markdown to PDF: {e}")
+        raise 
+        # sys.exit(f"Error converting markdown to PDF: {e}")
     
     logger.info("Succefully created the pdf for %s", str(model_response_path))
     
