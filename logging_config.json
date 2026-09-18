@@ -12,9 +12,14 @@
             "class": "logging.FileHandler",
             "formatter": "standard",
             "filename": "history.log"
+        },
+        "console":{
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+            "stream": "ext://sys.stdout"
         }
     },
-     "root": {"level": "ERROR", "handlers": ["file"]},
+     "root": {"level": "ERROR", "handlers": ["file", "console"]},
     "loggers": {
         "make_sense": {"level": "INFO"},
         "marker": {"level": "WARNING", "handlers": []}
