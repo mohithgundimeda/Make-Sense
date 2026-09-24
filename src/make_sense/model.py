@@ -193,7 +193,18 @@ def _get_safe_response(models: list, api_key: str, prompt: str, data: str, gemin
             
             response_dict = response.json()
             try:
-                raw_text = response_dict['choices'][0]['message']['content']
+                response_dict = response.json()
+
+                if "error" in response_dict:
+                    error_info = response_dict["error"]
+                    logger.error("%s returned an error object: %s. Trying next model...", model, error_info)
+                    continue
+
+                try:
+                    raw_text = response_dict['choices'][0]['message']['content']
+                except (KeyError, IndexError) as e:
+                    logger.error("%s returned unexpected response shape: %s | full response: %s. Trying next model...", model, str(e), response_dict)
+                    continue
                 
                 if not raw_text:
                     logger.error("%s returned empty response. Trying next model...", model)
@@ -271,15 +282,19 @@ def generate_explanation(md_filepath: Path, api_key: str) -> Path:
                         parser = configparser.ConfigParser()
                         parser.read(project_root / 'project_variables.ini')
                         
-                        openrouter_models = list(parser['OPENROUTER'].values())
+                        try:
+                            openrouter_models = list(parser['OPENROUTER'].values())
+                            gemini_model = list(parser['GEMINI'].values())[0]
                         
-                        gemini_model = list(parser['GEMINI'].values())[0]
+                        except KeyError as e:
+                            logger.critical("Unable to find project_variables.ini in project root.")
+                            raise
                         
                         model_response = _get_safe_response(models = openrouter_models, api_key=api_key, prompt=prompt, data = data, gemini_model=gemini_model)
                         
                     
                     except Exception as e:
-                        logger.critical(f"Unable to find project_variables.ini in project root.")
+                        logger.critical(f"Model faild to give response. Note somtimes the api response is not having 'choices' field.")
                         raise
                         # sys.exit(str(e))
                     
@@ -296,12 +311,12 @@ def generate_explanation(md_filepath: Path, api_key: str) -> Path:
                     
             except FileNotFoundError as e:
                 logger.critical("Unable to find the prompt.txt inside %s", str(project_root))
-                raise FileNotFoundError(str(e))
+                raise
                 # sys.exit(str(e))
             
     except FileNotFoundError as e:
         logger.critical("Unable to find the marker's output file at %s", str(md_filepath))
-        raise FileNotFoundError(str(e))
+        raise
         # sys.exit(str(e))
 
 if __name__ == '__main__':

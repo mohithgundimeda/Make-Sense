@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
-import sys
+# import sys
 import shutil
 import json
 import logging
@@ -27,6 +27,8 @@ import gradio as gr
 from make_sense.parser import MarkerSettings, pdf_2_md
 from make_sense.model import generate_explanation
 from make_sense.pandoc import save_model_response
+
+IDLE_STATE = ("Explain Paper", gr.update(visible=True), gr.update(visible=False), None)
 
 def setup_logging(config_path: Path) -> None:
     """
@@ -77,6 +79,7 @@ def pipeline(pdf_file: str | None):
     """
 
     if not pdf_file:
+        yield IDLE_STATE
         raise gr.Error("Please upload a PDF first.")
 
     uploaded_path = Path(pdf_file).resolve()
@@ -85,9 +88,11 @@ def pipeline(pdf_file: str | None):
 
     if not uploaded_path.is_file():
         logger.error("Gradio supplied a file that does not exist: %s",uploaded_path)
+        yield IDLE_STATE
         raise gr.Error(f"Uploaded PDF could not be found:\n{str(uploaded_path)}")
 
     if uploaded_path.suffix.lower() != ".pdf":
+        yield IDLE_STATE
         raise gr.Error("Please upload a PDF file.")
 
     yield ("Preparing PDF...", gr.update(visible=True), gr.update(visible=False), None)
@@ -97,6 +102,7 @@ def pipeline(pdf_file: str | None):
 
     except Exception as e:
         logger.exception("Failed to clear Temp directory.")
+        yield IDLE_STATE
         raise gr.Error(f"Could not prepare temporary directory: {e}")
 
     working_path = temp_path / uploaded_path.name
@@ -111,10 +117,12 @@ def pipeline(pdf_file: str | None):
 
     except Exception as e:
         logger.exception("Failed to copy uploaded PDF from %s to %s", str(uploaded_path), str(working_path))
+        yield IDLE_STATE
         raise gr.Error(f"Could not copy uploaded PDF: {e}")
 
     if not working_path.is_file():
         logger.error("PDF copy operation completed but file does not exist: %s", str(working_path))
+        yield IDLE_STATE
         raise gr.Error("Could not prepare the uploaded PDF for processing.")
 
     logger.info("Copied PDF successfully: %s -> %s",str(uploaded_path), str(working_path))
@@ -132,6 +140,7 @@ def pipeline(pdf_file: str | None):
     except Exception as e:
 
         logger.exception("PDF to Markdown conversion failed.")
+        yield IDLE_STATE
         raise gr.Error(f"PDF conversion failed: {e}")
 
     yield("Generating explanation...", gr.update(visible=True), gr.update(visible=False), None)
@@ -147,7 +156,7 @@ def pipeline(pdf_file: str | None):
     except Exception as e:
 
         logger.exception("Explanation generation failed.")
-
+        yield IDLE_STATE
         raise gr.Error(f"Explanation generation failed: {e}")
 
     yield ("Creating final PDF...", gr.update(visible=True), gr.update(visible=False), None)
@@ -168,7 +177,7 @@ def pipeline(pdf_file: str | None):
     except Exception as e:
 
         logger.exception("Final PDF creation failed.")
-
+        yield IDLE_STATE
         raise gr.Error(f"Could not create final PDF: {e}")
 
     logger.info("Pipeline completed successfully.")
@@ -198,7 +207,7 @@ if __name__ == "__main__":
         )
 
         gr.Error("Unable to find marker_config.json.")
-        sys.exit("Unable to find marker_config.json.")
+        # sys.exit("Unable to find marker_config.json.")
 
     config: dict = json.loads(marker_config_path.read_text(encoding="utf-8"))
 

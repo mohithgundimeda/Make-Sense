@@ -19,7 +19,7 @@
             "stream": "ext://sys.stdout"
         }
     },
-     "root": {"level": "ERROR", "handlers": ["file", "console"]},
+     "root": {"level": "ERROR", "handlers": ["file"]},
     "loggers": {
         "make_sense": {"level": "INFO"},
         "marker": {"level": "WARNING", "handlers": []}

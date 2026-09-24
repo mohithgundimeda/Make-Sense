@@ -22,7 +22,7 @@ if (not os.environ.get("LLAMA_CPP_BINARY") or
     
     raise ValueError('Missing llama.cpp environment variables (SURYA_INFERENCE_BACKEND, LLAMA_CPP_BINARY).')
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 from pydantic import Field
 import logging
 import json
