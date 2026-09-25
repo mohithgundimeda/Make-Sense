@@ -97,7 +97,12 @@ uv.lock
 
 2. Set the environment variables `OPENROUTER_API_KEY` and `GEMINI_API_KEY`.
 
-3. Ensure Pandoc, Tectonic, and a `llama-server` binary are available, and that `LLAMA_CPP_BINARY` and `SURYA_INFERENCE_BACKEND` are set in the environment before Marker is imported. Configuration files (`marker_config.json`, `project_variables.ini`, `logging_config.json`, `prompt.txt`) should be present in the project root.
+3. Ensure Pandoc, Tectonic, and a `llama-server` binary are available, you can find system specific installations at the following links:
+   - [Pandoc](https://pandoc.org/installing.html)
+   - [Tectonic](https://tectonic-typesetting.github.io/book/latest/installation/)
+   - [llama.cpp](https://github.com/ggml-org/llama.cpp/releases)
+
+ NOTE: `LLAMA_CPP_BINARY` and `SURYA_INFERENCE_BACKEND` are set to the path of `llama-server` binary and `llamacpp` respectively in the environment variables before Marker is imported. Configuration files (`marker_config.json`, `project_variables.ini`, `logging_config.json`, `prompt.txt`) should be present in the project root.
 
 ## Usage
 
